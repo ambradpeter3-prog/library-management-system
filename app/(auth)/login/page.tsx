@@ -35,7 +35,7 @@ function LoginForm() {
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-8 py-8 text-white">
           <div className="text-3xl mb-2">📖</div>
           <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-indigo-200 text-sm mt-1">Sign in to LibraryMS</p>
+          <p className="text-indigo-200 text-sm mt-1">Sign in to PeterLibraryMS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="px-8 py-8 space-y-5">
