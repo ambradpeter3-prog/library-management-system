@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { getSession, logout, type User } from "@/lib/auth";
 
 const navItems = [
-  { href: "/",        label: "Dashboard", icon: "🏠" },
-  { href: "/books",   label: "Books",     icon: "📖" },
-  { href: "/members", label: "Members",   icon: "👥" },
-  { href: "/borrows", label: "Borrows",   icon: "📋" },
+  { href: "/dashboard", label: "Dashboard", icon: "🏠" },
+  { href: "/books",     label: "Books",     icon: "📖" },
+  { href: "/members",   label: "Members",   icon: "👥" },
+  { href: "/borrows",   label: "Borrows",   icon: "📋" },
 ];
 
 export default function Sidebar() {
@@ -45,7 +45,9 @@ export default function Sidebar() {
         {/* Nav */}
         <nav className="flex-1 px-3 space-y-1">
           {navItems.map(({ href, label, icon }) => {
-            const active = pathname === href;
+            const active = href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(href);
             return (
               <Link
                 key={href}

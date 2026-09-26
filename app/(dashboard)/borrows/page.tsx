@@ -1,14 +1,8 @@
 "use client";
 import { useState } from "react";
-import { borrowRecords as initialRecords, books, members, BorrowRecord } from "@/lib/data";
+import { borrowRecords, books, members, BorrowRecord } from "@/lib/data";
 
 type Filter = "all" | "active" | "overdue" | "returned";
-
-type EnrichedRecord = BorrowRecord & {
-  book: (typeof books)[0];
-  member: (typeof members)[0];
-  isOverdue: boolean;
-};
 
 const bookCovers: Record<string, string> = {
   b1: "bg-amber-600", b2: "bg-blue-700", b3: "bg-red-700", b4: "bg-orange-500",
@@ -26,11 +20,10 @@ function today(): string {
 }
 
 export default function BorrowsPage() {
-  const [records, setRecords] = useState<BorrowRecord[]>(initialRecords);
+  const [records, setRecords] = useState<BorrowRecord[]>(borrowRecords);
   const [filter, setFilter] = useState<Filter>("all");
   const [showModal, setShowModal] = useState(false);
 
-  // Form state
   const [form, setForm] = useState({
     bookId: books[0]?.id ?? "",
     memberId: members[0]?.id ?? "",
@@ -39,9 +32,9 @@ export default function BorrowsPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const enriched: EnrichedRecord[] = records.map((r) => ({
+  const enriched = records.map((r) => ({
     ...r,
-    book: books.find((b) => b.id === r.bookId)!,
+    book:   books.find((b) => b.id === r.bookId)!,
     member: members.find((m) => m.id === r.memberId)!,
     isOverdue: !r.returnedAt && new Date(r.dueAt) < new Date(),
   }));
@@ -67,7 +60,6 @@ export default function BorrowsPage() {
     { key: "returned", label: "Returned", dot: "bg-emerald-500" },
   ];
 
-  // Available books = books not already on an active loan
   const activeLoanBookIds = new Set(records.filter((r) => !r.returnedAt).map((r) => r.bookId));
   const availableBooks = books.filter((b) => !activeLoanBookIds.has(b.id));
 
@@ -79,7 +71,6 @@ export default function BorrowsPage() {
     const dur = Number(form.durationDays);
     if (!form.durationDays || isNaN(dur) || dur < 1 || dur > 365)
       e.durationDays = "Duration must be 1–365 days.";
-    // check book not already on loan
     if (form.bookId && activeLoanBookIds.has(form.bookId))
       e.bookId = "This book is already on an active loan.";
     return e;
@@ -112,6 +103,16 @@ export default function BorrowsPage() {
     setErrors({});
   }
 
+  function openModal() {
+    setForm({
+      bookId: availableBooks[0]?.id ?? books[0]?.id ?? "",
+      memberId: members[0]?.id ?? "",
+      borrowedAt: today(),
+      durationDays: "14",
+    });
+    setShowModal(true);
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6 flex items-center justify-between">
@@ -120,7 +121,7 @@ export default function BorrowsPage() {
           <p className="text-slate-500 mt-0.5 text-sm">Track all book loans and returns</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openModal}
           className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
         >
           + New Loan
@@ -198,129 +199,72 @@ export default function BorrowsPage() {
         )}
       </div>
 
-      {/* New Loan Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={handleClose} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-slate-900">New Loan</h3>
-              <button
-                onClick={handleClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-              >
+              <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-
             <div className="space-y-4">
-
-              {/* Book selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                  Book <span className="text-rose-500">*</span>
-                </label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Book <span className="text-rose-500">*</span></label>
                 {availableBooks.length === 0 ? (
                   <div className="w-full border border-amber-200 bg-amber-50 rounded-xl px-4 py-2.5 text-sm text-amber-700">
                     No books available — all copies are on loan.
                   </div>
                 ) : (
-                  <select
-                    value={form.bookId}
+                  <select value={form.bookId}
                     onChange={(e) => { setForm((f) => ({ ...f, bookId: e.target.value })); setErrors((er) => ({ ...er, bookId: "" })); }}
-                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${
-                      errors.bookId ? "border-rose-400 bg-rose-50" : "border-slate-200"
-                    }`}
-                  >
-                    {availableBooks.map((b) => (
-                      <option key={b.id} value={b.id}>{b.title} — {b.author}</option>
-                    ))}
+                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${errors.bookId ? "border-rose-400 bg-rose-50" : "border-slate-200"}`}>
+                    {availableBooks.map((b) => <option key={b.id} value={b.id}>{b.title} — {b.author}</option>)}
                   </select>
                 )}
                 {errors.bookId && <p className="text-xs text-rose-500 mt-1">{errors.bookId}</p>}
               </div>
-
-              {/* Member selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                  Member <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={form.memberId}
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Member <span className="text-rose-500">*</span></label>
+                <select value={form.memberId}
                   onChange={(e) => { setForm((f) => ({ ...f, memberId: e.target.value })); setErrors((er) => ({ ...er, memberId: "" })); }}
-                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${
-                    errors.memberId ? "border-rose-400 bg-rose-50" : "border-slate-200"
-                  }`}
-                >
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name} — {m.email}</option>
-                  ))}
+                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${errors.memberId ? "border-rose-400 bg-rose-50" : "border-slate-200"}`}>
+                  {members.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.email}</option>)}
                 </select>
                 {errors.memberId && <p className="text-xs text-rose-500 mt-1">{errors.memberId}</p>}
               </div>
-
-              {/* Borrow date + duration row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                    Borrow Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={form.borrowedAt}
-                    max={today()}
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Borrow Date <span className="text-rose-500">*</span></label>
+                  <input type="date" value={form.borrowedAt} max={today()}
                     onChange={(e) => { setForm((f) => ({ ...f, borrowedAt: e.target.value })); setErrors((er) => ({ ...er, borrowedAt: "" })); }}
-                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${
-                      errors.borrowedAt ? "border-rose-400 bg-rose-50" : "border-slate-200"
-                    }`}
-                  />
+                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${errors.borrowedAt ? "border-rose-400 bg-rose-50" : "border-slate-200"}`} />
                   {errors.borrowedAt && <p className="text-xs text-rose-500 mt-1">{errors.borrowedAt}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                    Duration (days) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={form.durationDays}
-                    min={1}
-                    max={365}
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Duration (days) <span className="text-rose-500">*</span></label>
+                  <input type="number" value={form.durationDays} min={1} max={365}
                     onChange={(e) => { setForm((f) => ({ ...f, durationDays: e.target.value })); setErrors((er) => ({ ...er, durationDays: "" })); }}
-                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${
-                      errors.durationDays ? "border-rose-400 bg-rose-50" : "border-slate-200"
-                    }`}
-                  />
+                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white ${errors.durationDays ? "border-rose-400 bg-rose-50" : "border-slate-200"}`} />
                   {errors.durationDays && <p className="text-xs text-rose-500 mt-1">{errors.durationDays}</p>}
                 </div>
               </div>
-
-              {/* Due date preview */}
               {form.borrowedAt && Number(form.durationDays) > 0 && !isNaN(Number(form.durationDays)) && (
                 <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2.5">
                   <svg className="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="text-xs text-indigo-700">
-                    Due on <span className="font-semibold">{addDays(form.borrowedAt, Number(form.durationDays))}</span>
-                  </span>
+                  <span className="text-xs text-indigo-700">Due on <span className="font-semibold">{addDays(form.borrowedAt, Number(form.durationDays))}</span></span>
                 </div>
               )}
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleClose}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={availableBooks.length === 0}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-              >
+              <button onClick={handleClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleAdd} disabled={availableBooks.length === 0}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors">
                 Create Loan
               </button>
             </div>

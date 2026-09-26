@@ -16,8 +16,6 @@ const defaultCovers: Record<string, string> = {
   b5: "bg-green-700", b6: "bg-teal-600", b7: "bg-purple-600", b8: "bg-rose-700",
 };
 
-const allGenres = ["All", ...Array.from(new Set(initialBooks.map((b) => b.genre)))];
-
 type BookWithColor = Book & { colorClass: string };
 
 export default function BooksPage() {
@@ -28,7 +26,6 @@ export default function BooksPage() {
   const [genre, setGenre] = useState("All");
   const [showModal, setShowModal] = useState(false);
 
-  // Form state
   const [form, setForm] = useState({
     title: "", author: "", genre: genres[0], year: new Date().getFullYear().toString(),
     available: true, colorClass: coverColors[0],
@@ -68,9 +65,7 @@ export default function BooksPage() {
       colorClass: form.colorClass,
     };
     setBookList((prev) => [newBook, ...prev]);
-    setShowModal(false);
-    setForm({ title: "", author: "", genre: genres[0], year: new Date().getFullYear().toString(), available: true, colorClass: coverColors[0] });
-    setErrors({});
+    handleClose();
   }
 
   function handleClose() {
@@ -138,7 +133,6 @@ export default function BooksPage() {
         )}
       </div>
 
-      {/* Add Book Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={handleClose} />
@@ -151,96 +145,59 @@ export default function BooksPage() {
                 </svg>
               </button>
             </div>
-
             <div className="space-y-4">
-              {/* Title */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">Title <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  value={form.title}
+                <input type="text" value={form.title}
                   onChange={(e) => { setForm((f) => ({ ...f, title: e.target.value })); setErrors((er) => ({ ...er, title: "" })); }}
                   placeholder="e.g. The Great Gatsby"
-                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.title ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`}
-                />
+                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.title ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`} />
                 {errors.title && <p className="text-xs text-rose-500 mt-1">{errors.title}</p>}
               </div>
-
-              {/* Author */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">Author <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  value={form.author}
+                <input type="text" value={form.author}
                   onChange={(e) => { setForm((f) => ({ ...f, author: e.target.value })); setErrors((er) => ({ ...er, author: "" })); }}
                   placeholder="e.g. F. Scott Fitzgerald"
-                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.author ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`}
-                />
+                  className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.author ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`} />
                 {errors.author && <p className="text-xs text-rose-500 mt-1">{errors.author}</p>}
               </div>
-
-              {/* Genre + Year row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1.5">Genre</label>
-                  <select
-                    value={form.genre}
-                    onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-                  >
+                  <select value={form.genre} onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
                     {genres.map((g) => <option key={g}>{g}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1.5">Year <span className="text-rose-500">*</span></label>
-                  <input
-                    type="number"
-                    value={form.year}
+                  <input type="number" value={form.year} min={1000} max={new Date().getFullYear()}
                     onChange={(e) => { setForm((f) => ({ ...f, year: e.target.value })); setErrors((er) => ({ ...er, year: "" })); }}
-                    placeholder="2024"
-                    min={1000}
-                    max={new Date().getFullYear()}
-                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.year ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`}
-                  />
+                    className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${errors.year ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"}`} />
                   {errors.year && <p className="text-xs text-rose-500 mt-1">{errors.year}</p>}
                 </div>
               </div>
-
-              {/* Cover color */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Cover Color</label>
                 <div className="flex gap-2 flex-wrap">
                   {coverColors.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, colorClass: c }))}
-                      className={`w-7 h-9 rounded-md ${c} transition-transform hover:scale-110 ${form.colorClass === c ? "ring-2 ring-offset-2 ring-indigo-500 scale-110" : ""}`}
-                    />
+                    <button key={c} type="button" onClick={() => setForm((f) => ({ ...f, colorClass: c }))}
+                      className={`w-7 h-9 rounded-md ${c} transition-transform hover:scale-110 ${form.colorClass === c ? "ring-2 ring-offset-2 ring-indigo-500 scale-110" : ""}`} />
                   ))}
                 </div>
               </div>
-
-              {/* Availability */}
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, available: !f.available }))}
-                  className={`relative w-10 h-5 rounded-full transition-colors ${form.available ? "bg-indigo-600" : "bg-slate-300"}`}
-                >
+                <button type="button" onClick={() => setForm((f) => ({ ...f, available: !f.available }))}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${form.available ? "bg-indigo-600" : "bg-slate-300"}`}>
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.available ? "translate-x-5" : "translate-x-0.5"}`} />
                 </button>
                 <span className="text-sm text-slate-600">{form.available ? "Available" : "Unavailable"}</span>
               </div>
             </div>
-
             <div className="flex gap-3 mt-6">
-              <button onClick={handleClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleAdd} className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors">
-                Add Book
-              </button>
+              <button onClick={handleClose} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleAdd} className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors">Add Book</button>
             </div>
           </div>
         </div>

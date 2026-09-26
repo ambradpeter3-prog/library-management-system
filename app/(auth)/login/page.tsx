@@ -26,7 +26,7 @@ function LoginForm() {
     const user = loginUser(form.email, form.password);
     setLoading(false);
     if (!user) { setError("Invalid email or password."); return; }
-    router.push("/");
+    router.push("/dashboard");
   };
 
   return (
