@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerUser } from "@/lib/auth";
 
-type Form = { name: string; email: string; role: string; password: string; confirm: string };
+type Form = { name: string; email: string; password: string; confirm: string };
 type Errors = Partial<Record<keyof Form, string>>;
 
 function validate(form: Form): Errors {
   const errors: Errors = {};
   if (!form.name.trim()) errors.name = "Full name is required.";
   if (!form.email.includes("@")) errors.email = "Enter a valid email.";
-  if (!form.role) errors.role = "Please select a role.";
   if (form.password.length < 8) errors.password = "Password must be at least 8 characters.";
   if (form.password !== form.confirm) errors.confirm = "Passwords do not match.";
   return errors;
@@ -32,13 +31,13 @@ const strengthColor = ["", "bg-rose-400", "bg-amber-400", "bg-yellow-400", "bg-e
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState<Form>({ name: "", email: "", role: "", password: "", confirm: "" });
+  const [form, setForm] = useState<Form>({ name: "", email: "", password: "", confirm: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dupError, setDupError] = useState("");
 
-  const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [key]: e.target.value });
     if (errors[key]) setErrors({ ...errors, [key]: undefined });
     setDupError("");
@@ -50,7 +49,7 @@ export default function RegisterPage() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1000));
-    const ok = registerUser({ name: form.name, email: form.email, role: form.role, password: form.password });
+    const ok = registerUser({ name: form.name, email: form.email, role: "member", password: form.password });
     setLoading(false);
     if (!ok) { setDupError("An account with this email already exists."); return; }
     router.push("/login?registered=1");
@@ -80,15 +79,6 @@ export default function RegisterPage() {
 
           <Field label="Email address" error={errors.email}>
             <input type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} className={inputCls(!!errors.email)} />
-          </Field>
-
-          <Field label="Role" error={errors.role}>
-            <select value={form.role} onChange={set("role")} className={inputCls(!!errors.role)}>
-              <option value="">Select a role…</option>
-              <option value="member">Member</option>
-              <option value="librarian">Librarian</option>
-              <option value="admin">Admin</option>
-            </select>
           </Field>
 
           <Field label="Password" error={errors.password}>
