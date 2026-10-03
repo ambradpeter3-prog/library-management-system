@@ -11,6 +11,18 @@ const navItems = [
   { href: "/borrows",   label: "Borrows",   icon: "📋" },
 ];
 
+// Sidebar background switches based on active section
+function getSidebarBg(pathname: string): string {
+  if (
+    pathname.startsWith("/books") ||
+    pathname.startsWith("/members") ||
+    pathname.startsWith("/borrows")
+  ) {
+    return "url('/ter2.jpg')";
+  }
+  return "url('/ter.jpg')";
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
@@ -22,10 +34,10 @@ export default function Sidebar() {
 
   return (
     <aside className="relative w-64 min-h-screen flex flex-col overflow-hidden">
-      {/* Background: photo brightened + dark overlay */}
+      {/* Background: switches between ter.jpg (dashboard) and ter2.jpg (books/members/borrows) */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/ter.jpg')", filter: "brightness(1.3) contrast(1.05)" }}
+        className="absolute inset-0 bg-cover bg-center transition-all duration-500"
+        style={{ backgroundImage: getSidebarBg(pathname), filter: "brightness(1.3) contrast(1.05)" }}
       />
       <div className="absolute inset-0 bg-slate-900/80" />
 
@@ -61,7 +73,7 @@ export default function Sidebar() {
                   <>
                     <div
                       className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity"
-                      style={{ backgroundImage: "url('/ter.jpg')", filter: "brightness(1.3)" }}
+                      style={{ backgroundImage: getSidebarBg(pathname), filter: "brightness(1.3)" }}
                     />
                     <div className="absolute inset-0 bg-slate-800/60 group-hover:bg-slate-700/60 transition-colors" />
                   </>
